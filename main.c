@@ -2,11 +2,11 @@
 #include <stdlib.h>
 
 #include "trie.h"
-typedef struct Node {
-    struct Node* children;
-    size_t count;
-    char letter;
-} Node;
+
+// In C, we need the function sigs in a .c file even if they're inline
+extern inline void trieInsert(Trie* t, char c);
+extern inline Trie* trieSearch(Trie* t, char* str);
+extern inline void trieDelete(Trie* t, char* str);
 
 int main() {
     FILE* words = fopen("/usr/share/dict/words", "r");
@@ -16,8 +16,7 @@ int main() {
         return -1;
     }
 
-    Node root = {0};
-    Node* children = malloc(1024 * sizeof(Node));
+    Trie root = {0};
 
     char* cur_word = malloc(20 * sizeof(char));
     int word_len = 0;
@@ -34,23 +33,20 @@ int main() {
             word_len = 0;
 
         } else {
+            // traverse the tree
+            trieInsert(trieSearch(&root, cur_word), c);  
+
+            // Add to cur_word for printing purposes
             cur_word[word_len] = c;
             word_len++;
-
-            // traverse the tree
-            Node* cur_node = &root;
-            // while c not in cur_node->children
-            while (cur_node->children
-           
         }
     }
 
     if (!(feof(words))) { 
-        // some other error? Handle?
+        fprintf(stderr, "Error reading words file\n"); 
     }
     
     free(cur_word);
-    free(children);
     fclose(words);
     return 0;
 }
