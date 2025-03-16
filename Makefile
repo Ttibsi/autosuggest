@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g
+CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g -fsanitize=address,undefined
 LDFLAGS := 
 
 all: auto
@@ -8,7 +8,7 @@ main.o: main.c
 	$(CC) $< -c -o $@ $(CFLAGS) $(LDFLAGS)
 
 auto: main.o
-	$(CC) $^ -o $@ $(CXXFLAGS) $(LDFLAGS)
+	$(CC) $^ -o $@ $(CFLAGS) $(LDFLAGS)
 
 .PHONY: clean
 clean:

@@ -18,7 +18,7 @@ int main() {
 
     Trie root = {0};
 
-    char* cur_word = malloc(20 * sizeof(char));
+    char* cur_word = malloc(50 * sizeof(char));
     int word_len = 0;
     char c;
 
