@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g -fsanitize=address,undefined
-LDFLAGS := 
+LDFLAGS := -lncurses
 
 all: auto
 

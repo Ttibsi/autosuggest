@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <ncurses.h>
+#include <ctype.h>
 
 #include "trie.h"
 
@@ -7,6 +10,9 @@
 extern inline void trieInsert(Trie* t, char c);
 extern inline Trie* trieSearch(Trie* t, char* str);
 extern inline void trieDelete(Trie* t, char* str);
+
+void draw_options(Trie* root, char* input) {
+}
 
 int main() {
     FILE* words = fopen("/usr/share/dict/words", "r");
@@ -48,5 +54,37 @@ int main() {
     
     free(cur_word);
     fclose(words);
+
+    char* input = malloc(50 * sizeof(char));
+    input[0] = '\0';
+    int input_len = 0;
+
+    keypad(stdscr, TRUE);
+    cbreak();
+    noecho();
+
+    while(true) {
+        printw("\x1b[1K\r> %s\n", input);
+        char c = getch();
+
+        if (isalpha(c)) {
+            input[input_len] = c;
+            input_len++;
+            input[input_len] = '\0';
+            continue;
+        }
+
+        if (input_len >= 3) {
+            draw_options(&root, input);
+
+            switch (c) {
+                case KEY_UP:
+                case KEY_DOWN:
+            }
+        }
+    }
+
+    nocbreak();
+    echo();
     return 0;
 }
