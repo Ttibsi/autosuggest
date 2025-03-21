@@ -85,7 +85,7 @@ int main() {
     enable_raw_mode();
 
     while(true) {
-        printf("\x1b[1K\r> %s\n", input);
+        printf("\x1b[2K\r> %s", input);
         char c = getchar();
 
         if (c == CTRL_KEY('c')) { break; }
@@ -100,6 +100,7 @@ int main() {
 
     disable_raw_mode();
     free(input);
+    printf("\n");
 
     return 0;
 }
