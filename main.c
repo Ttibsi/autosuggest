@@ -1,17 +1,40 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <ncurses.h>
-#include <ctype.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "trie.h"
+
+#define CTRL_KEY(k) ((k) & 0x1f)
 
 // In C, we need the function sigs in a .c file even if they're inline
 extern inline void trieInsert(Trie* t, char c);
 extern inline Trie* trieSearch(Trie* t, char* str);
 extern inline void trieDelete(Trie* t, char* str);
 
+struct termios orig_termios;
+
+void enable_raw_mode(void) {
+    tcgetattr(STDIN_FILENO, &orig_termios);
+
+    struct termios raw = orig_termios;
+    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    raw.c_oflag &= ~(OPOST);
+    raw.c_cflag |= (CS8);
+    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+void disable_raw_mode(void) {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
 void draw_options(Trie* root, char* input) {
+    (void)root;
+    (void)input;
 }
 
 int main() {
@@ -59,14 +82,13 @@ int main() {
     input[0] = '\0';
     int input_len = 0;
 
-    keypad(stdscr, TRUE);
-    cbreak();
-    noecho();
+    enable_raw_mode();
 
     while(true) {
-        printw("\x1b[1K\r> %s\n", input);
-        char c = getch();
+        printf("\x1b[1K\r> %s\n", input);
+        char c = getchar();
 
+        if (c == CTRL_KEY('c')) { break; }
         if (isalpha(c)) {
             input[input_len] = c;
             input_len++;
@@ -74,17 +96,10 @@ int main() {
             continue;
         }
 
-        if (input_len >= 3) {
-            draw_options(&root, input);
-
-            switch (c) {
-                case KEY_UP:
-                case KEY_DOWN:
-            }
-        }
     }
 
-    nocbreak();
-    echo();
+    disable_raw_mode();
+    free(input);
+
     return 0;
 }
