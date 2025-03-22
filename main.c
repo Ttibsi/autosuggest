@@ -35,11 +35,10 @@ void disable_raw_mode(void) {
 
 char* collate_words(Trie* root, char* prefix) {
     char* viable_words = malloc(VIABLE_WORD_BUF * sizeof(char));
-    Trie* start_point = trieSearch(root, prefix);
-    // for child in children
-        // Create new string, add prefix
-        // iterate (recurse?) through child's children, 
+    memset(viable_words, 0, VIABLE_WORD_BUF);
 
+    Trie* start_point = trieSearch(root, prefix);
+    if (start_point == NULL) { return viable_words; }
 }
 
 void print_words(char* words) {
