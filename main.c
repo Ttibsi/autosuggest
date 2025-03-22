@@ -8,6 +8,7 @@
 #include "trie.h"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
+#define VIABLE_WORD_BUF 1024
 
 // In C, we need the function sigs in a .c file even if they're inline
 extern inline void trieInsert(Trie* t, char c);
@@ -32,12 +33,27 @@ void disable_raw_mode(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-void draw_options(Trie* root, char* input) {
-    (void)root;
-    (void)input;
+char* collate_words(Trie* root, char* prefix) {
+    char* viable_words = malloc(VIABLE_WORD_BUF * sizeof(char));
+    Trie* start_point = trieSearch(root, prefix);
+    // for child in children
+        // Create new string, add prefix
+        // iterate (recurse?) through child's children, 
+
+}
+
+void print_words(char* words) {
+    for (int i = 0; i < VIABLE_WORD_BUF; i++) {
+        if (words[i] == '\0') { 
+            printf("\r\n"); 
+        } else {
+            printf("%c", words[i]);
+        }
+    }
 }
 
 int main() {
+    // Step 1: train the trie on words
     FILE* words = fopen("/usr/share/dict/words", "r");
     // 479826 lines
     if (!words) {
@@ -78,6 +94,7 @@ int main() {
     free(cur_word);
     fclose(words);
 
+    // Step 2: Get user input and display suggestions
     char* input = malloc(50 * sizeof(char));
     input[0] = '\0';
     int input_len = 0;
@@ -93,6 +110,14 @@ int main() {
             input[input_len] = c;
             input_len++;
             input[input_len] = '\0';
+
+            if (input_len >= 3) {
+                char* viable_words = collate_words(&root, input);
+                // TODO: grey colour text
+                print_words(viable_words);
+                free(viable_words);
+            }
+
             continue;
         }
 
