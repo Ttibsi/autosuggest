@@ -5,15 +5,11 @@
 #include <termios.h>
 #include <unistd.h>
 
+#define TRIE_IMPLEMENTATION
 #include "trie.h"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define VIABLE_WORD_BUF 1024
-
-// In C, we need the function sigs in a .c file even if they're inline
-extern inline void trieInsert(Trie* t, char c);
-extern inline Trie* trieSearch(Trie* t, char* str);
-extern inline void trieDelete(Trie* t, char* str);
 
 struct termios orig_termios;
 

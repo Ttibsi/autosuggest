@@ -16,6 +16,12 @@ typedef struct trie {
     char letter;
 } Trie;
 
+extern inline void trieInsert(Trie* t, char c);
+extern inline Trie* trieSearch(Trie* t, char* str);
+extern inline void trieDelete(Trie* t, char* str);
+
+#ifdef TRIE_IMPLEMENTATION
+
 inline void trieInsert(Trie* t, char c) {
     if (!(t->children_len)) { return; }
 
@@ -83,4 +89,5 @@ inline void trieDelete(Trie* t, char* str) {
     }
 }
 
+#endif // TRIE_IMPLEMENTATION
 #endif // TRIE_H
