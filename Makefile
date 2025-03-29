@@ -4,12 +4,15 @@ CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g -fsanitize=address,un
 all: auto
 
 main.o: main.c
-	$(CC) $< -c -o $@ $(CFLAGS)
+	$(CC) $< -c -o $@ -MMD -MP $(CFLAGS)
 
-auto: main.o
+auto: main.o 
 	$(CC) $^ -o $@ $(CFLAGS)
 
 .PHONY: clean
 clean:
 	rm main.o
 	rm auto
+	rm *.d 
+
+-include main.d
