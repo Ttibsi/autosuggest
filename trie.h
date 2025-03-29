@@ -7,7 +7,7 @@
 #include <string.h>
 
 // https://en.wikipedia.org/wiki/Trie
-#define ALPHABET_LEN 26
+#define ALPHABET_LEN 70
 
 typedef struct trie {
     struct trie* children[ALPHABET_LEN];
@@ -16,62 +16,69 @@ typedef struct trie {
     char letter;
 } Trie;
 
-extern inline void trieInsert(Trie* t, char c);
-extern inline Trie* trieSearch(Trie* t, char* str);
-extern inline void trieDelete(Trie* t, char* str);
+void trieInsert(Trie*, char);
+Trie* trieSearch(Trie*, char*);
+void trieDelete(Trie*, char*);
+void trieDestroy(Trie*);
 
 #ifdef TRIE_IMPLEMENTATION
 
-inline void trieInsert(Trie* t, char c) {
-    if (!(t->children_len)) { return; }
+void trieInsert(Trie* t, char c) {
+    if (t == NULL) { return; }
 
     // Check if the letter is already present in the trie's children
     for (size_t i = 0; i < t->children_len; i++) {
-        if (t->children[i]->letter == c) {
-            return;
+        if (t->children[i] && t->children[i]->letter == c) {
+            return; // Letter already exists
         }
     }
 
+    // Find first available slot
+    if (t->children_len >= ALPHABET_LEN) {
+        fprintf(stderr, "Warning: Maximum children reached\n");
+        return;
+    }
+
+    // Create new node
     t->children[t->children_len] = (Trie*)malloc(sizeof(Trie));
     *t->children[t->children_len] = (Trie){
         .children = {NULL},
         .children_len = 0,
-        .terminal = true,
+        .terminal = true, // Only set terminal at word endings
         .letter = c
     };
 
     t->children_len++;
-    t->terminal = false;
     return;
 }
 
-inline Trie* trieSearch(Trie* t, char* str) {
-    if (!(t->children_len)) { return t; }
+Trie* trieSearch(Trie* t, char* str) {
+    // Early return if input is NULL or empty
+    if (!t || !str ) { return NULL; }
 
     Trie* new_t = NULL;
 
     for (size_t i = 0; i < strlen(str); i++) {
+        new_t = NULL;
+        bool found = false;
+
+        if (t->terminal || t->children_len == 0) { return t; }
+
         for (size_t j = 0; j < t->children_len; j++) {
-            if (t->children[j]->letter == str[i]) {
+            if (t->children[j] && t->children[j]->letter == str[i]) {
                 new_t = t->children[j];
+                found = true;
                 break;
             }
-
-            new_t = NULL;
-        }
-
-        if (new_t == NULL) {
-            return NULL;
         }
 
         t = new_t;
-        if (i == strlen(str) - 1) { t->terminal = true; }
-
     }
-    return new_t;
+
+    return t;
 }
 
-inline void trieDelete(Trie* t, char* str) {
+void trieDelete(Trie* t, char* str) {
     if (strlen(str)) {
         char c = str[strlen(str) - 1];
         str[strlen(str) - 1] = '\0';
@@ -87,6 +94,21 @@ inline void trieDelete(Trie* t, char* str) {
             }
         }
     }
+}
+
+void trieDestroy(Trie* t) {
+    if (t == NULL) return;
+
+    // Recursively free all children
+    for (size_t i = 0; i < t->children_len; i++) {
+        if (t->children[i] != NULL) {
+            // Recursively destroy each child
+            trieDestroy(t->children[i]);
+        }
+    }
+
+    // Free the current node
+    free(t);
 }
 
 #endif // TRIE_IMPLEMENTATION

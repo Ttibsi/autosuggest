@@ -29,12 +29,54 @@ void disable_raw_mode(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
+void collect_words_helper(Trie* node, char* prefix, char* buffer, int depth, char* viable_words, int* word_index) {
+    // Base case: stop if node is NULL
+    if (node == NULL) return;
+
+    // Add current node's letter to the buffer
+    buffer[depth] = node->letter;
+    buffer[depth + 1] = '\0';
+
+    // If this is a terminal node (end of a valid word)
+    if (node->terminal && depth > 0) {
+        // Copy prefix to viable_words
+        int prefix_len = strlen(prefix);
+        int i = 0;
+        while (i < prefix_len - 1 && *word_index < VIABLE_WORD_BUF - 1) {
+            viable_words[(*word_index)++] = prefix[i++];
+        }
+
+        // Copy current word path (buffer) to viable_words
+        i = 0;
+        while (buffer[i] != '\0' && *word_index < VIABLE_WORD_BUF - 1) {
+            viable_words[(*word_index)++] = buffer[i++];
+        }
+
+        // Add word separator
+        viable_words[(*word_index)++] = '\0';
+    }
+
+    // Recursively explore all children of the current node
+    for (size_t i = 0; i < node->children_len; i++) {
+        collect_words_helper(node->children[i], prefix, buffer, depth + 1, viable_words, word_index);
+    }
+}
+
 char* collate_words(Trie* root, char* prefix) {
     char* viable_words = malloc(VIABLE_WORD_BUF * sizeof(char));
     memset(viable_words, 0, VIABLE_WORD_BUF);
 
     Trie* start_point = trieSearch(root, prefix);
     if (start_point == NULL) { return viable_words; }
+
+    char* buffer = malloc(100 * sizeof(char));
+    int word_index = 0;
+
+    // Start collecting words recursively
+    collect_words_helper(start_point, prefix, buffer, 0, viable_words, &word_index);
+
+    free(buffer);
+    return viable_words;
 }
 
 void print_words(char* words) {
@@ -50,15 +92,21 @@ void print_words(char* words) {
 int main() {
     // Step 1: train the trie on words
     FILE* words = fopen("/usr/share/dict/words", "r");
-    // 479826 lines
     if (!words) {
         perror("ERROR: Failed to open words file");
         return -1;
     }
 
-    Trie root = {0};
+    Trie* root = (Trie*)malloc(sizeof(Trie));
+    *root = (Trie){
+        .children = {NULL},
+        .children_len = 0,
+        .terminal = true, // Only set terminal at word endings
+        .letter = '\0'
+    };
 
     char* cur_word = malloc(50 * sizeof(char));
+    cur_word[0] = '\0';
     int word_len = 0;
     char c;
 
@@ -73,12 +121,15 @@ int main() {
             word_len = 0;
 
         } else {
-            // traverse the tree
-            trieInsert(trieSearch(&root, cur_word), c);  
-
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
             word_len++;
+            cur_word[word_len] = '\0';
+
+            // traverse the tree
+            Trie* parent = trieSearch(root, cur_word);
+            trieInsert((parent == NULL ? root: parent), c);
+
         }
     }
 
@@ -95,9 +146,10 @@ int main() {
     int input_len = 0;
 
     enable_raw_mode();
+    printf("\x1b[2J\x1b[H");
 
     while(true) {
-        printf("\x1b[2K\r> %s", input);
+        printf("\x1b[H\r> %s", input);
         char c = getchar();
 
         if (c == CTRL_KEY('c')) { break; }
@@ -107,7 +159,7 @@ int main() {
             input[input_len] = '\0';
 
             if (input_len >= 3) {
-                char* viable_words = collate_words(&root, input);
+                char* viable_words = collate_words(root, input);
                 // TODO: grey colour text
                 print_words(viable_words);
                 free(viable_words);
@@ -115,10 +167,10 @@ int main() {
 
             continue;
         }
-
     }
 
     disable_raw_mode();
+    trieDestroy(root);
     free(input);
     printf("\n");
 
