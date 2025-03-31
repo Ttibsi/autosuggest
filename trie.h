@@ -1,6 +1,7 @@
 #ifndef TRIE_H
 #define TRIE_H
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -9,20 +10,22 @@
 // https://en.wikipedia.org/wiki/Trie
 #define ALPHABET_LEN 70
 
+// `terminal` flag means it's a whole word, doesn't mean it can't have children
+// ex the word `ten` would have a terminal flag, even though `tend` is a legal
+// word stored as a child of `ten`
 typedef struct trie {
     struct trie* children[ALPHABET_LEN];
     size_t children_len;
+    char* word;
     bool terminal;
-    char letter;
 } Trie;
 
-void trieInsert(Trie*, char);
+void trieInsert(Trie*, char, bool);
 Trie* trieSearch(Trie*, char*);
-void trieDelete(Trie*, char*);
-void trieDestroy(Trie*);
 
 #ifdef TRIE_IMPLEMENTATION
 
+#if 0
 void trieInsert(Trie* t, char c) {
     if (t == NULL) { return; }
 
@@ -110,6 +113,57 @@ void trieDestroy(Trie* t) {
     // Free the current node
     free(t);
 }
+
+#else
+
+void trieInsert(Trie* t, char c, bool terminal) {
+    if (t == NULL) { return; }
+    if (isspace(c)) { return; }
+
+    char* input_word = malloc(55 * sizeof(char));
+    sprintf(input_word, "%s%c", t->word, c);
+
+    if (t->children_len == ALPHABET_LEN) {
+        fprintf(stderr, "Word is too long: %c(%i) not included\n", c, c);
+    }
+
+    for (size_t i = 0; i < t->children_len; i++) {
+        if (t->children[i]->word == input_word) { return; }
+    }
+
+    Trie* new_node = (Trie*)malloc(sizeof(Trie));
+    *new_node = (Trie){
+        .children_len = 0,
+        .word = input_word,
+        .terminal = terminal
+    };
+
+    t->children[t->children_len++] = new_node;
+}
+
+Trie* trieSearch(Trie* t, char* word) {
+    if (t == NULL) { return NULL; }
+    if (strlen(word) == 0) { return NULL; }
+
+    for (size_t i = 0; i < strlen(word); i++) {
+        bool found = false;
+        for (size_t j = 0; j < ALPHABET_LEN; j++) {
+            if (t->children[j] == NULL) { break; }
+
+            if (strspn(word, t->children[j]->word) == strlen(word)) {
+                t = t->children[j];
+                found = true;
+                break;
+            }
+        }
+        // Failed to find
+        if (!(found)) { return NULL; }
+    }
+
+    return t;
+}
+
+#endif
 
 #endif // TRIE_IMPLEMENTATION
 #endif // TRIE_H

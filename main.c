@@ -8,6 +8,9 @@
 #define TRIE_IMPLEMENTATION
 #include "trie.h"
 
+#define ARENA_IMPLEMENTATION
+#include "arena.h"
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define VIABLE_WORD_BUF 1024
 
@@ -29,37 +32,29 @@ void disable_raw_mode(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-void collect_words_helper(Trie* node, char* prefix, char* buffer, int depth, char* viable_words, int* word_index) {
-    // Base case: stop if node is NULL
-    if (node == NULL) return;
-
-    // Add current node's letter to the buffer
-    buffer[depth] = node->letter;
-    buffer[depth + 1] = '\0';
-
-    // If this is a terminal node (end of a valid word)
-    if (node->terminal && depth > 0) {
-        // Copy prefix to viable_words
-        int prefix_len = strlen(prefix);
-        int i = 0;
-        while (i < prefix_len - 1 && *word_index < VIABLE_WORD_BUF - 1) {
-            viable_words[(*word_index)++] = prefix[i++];
-        }
-
-        // Copy current word path (buffer) to viable_words
-        i = 0;
-        while (buffer[i] != '\0' && *word_index < VIABLE_WORD_BUF - 1) {
-            viable_words[(*word_index)++] = buffer[i++];
-        }
-
-        // Add word separator
-        viable_words[(*word_index)++] = '\0';
+int find_terminal_words(Trie* start, char* words, int len) {
+    if (!(start->children_len)) {
+        return len;
     }
 
-    // Recursively explore all children of the current node
-    for (size_t i = 0; i < node->children_len; i++) {
-        collect_words_helper(node->children[i], prefix, buffer, depth + 1, viable_words, word_index);
+    if (start->terminal) {
+        if (len + strlen(start->word) > VIABLE_WORD_BUF) {
+            return len;
+        }
+
+        for (size_t i = 0; i < strlen(start->word); i++) {
+            words[len] = start->word[i];
+            len++;
+        }
+        words[len] = '\0';
+        len++;
     }
+
+    for (size_t i = 0; i < start->children_len; i++) {
+        len = find_terminal_words(start->children[i], words, len);
+    }
+
+    return len;
 }
 
 char* collate_words(Trie* root, char* prefix) {
@@ -69,13 +64,7 @@ char* collate_words(Trie* root, char* prefix) {
     Trie* start_point = trieSearch(root, prefix);
     if (start_point == NULL) { return viable_words; }
 
-    char* buffer = malloc(100 * sizeof(char));
-    int word_index = 0;
-
-    // Start collecting words recursively
-    collect_words_helper(start_point, prefix, buffer, 0, viable_words, &word_index);
-
-    free(buffer);
+    (void)find_terminal_words(start_point, viable_words, 0);
     return viable_words;
 }
 
@@ -97,39 +86,42 @@ int main() {
         return -1;
     }
 
-    Trie* root = (Trie*)malloc(sizeof(Trie));
+    Arena arena = ArenaNew(1024 * 4);
+    Trie* root = ArenaAllocate(arena, sizeof(Trie));
     *root = (Trie){
-        .children = {NULL},
         .children_len = 0,
-        .terminal = true, // Only set terminal at word endings
-        .letter = '\0'
+        .word = "\0",
+        .terminal = false,
     };
 
     char* cur_word = malloc(50 * sizeof(char));
     cur_word[0] = '\0';
     int word_len = 0;
     char c;
+    int word_count = 0;
 
     while ((c = fgetc(words)) != EOF) {
         if (c == '\r') {
             continue;
         } else if (c == '\n') {
-            cur_word[word_len] = '\0';
-            printf("Trained: %s\n", cur_word);
+            Trie* parent = trieSearch(root, cur_word);
+            trieInsert(parent, c, true);
 
-            cur_word[word_len] = ' ';
+            word_count++;
+            printf("Trained (%i): %s\n", word_count, cur_word);
+
+            cur_word[0] = '\0';
             word_len = 0;
 
         } else {
+            // traverse the tree
+            Trie* parent = trieSearch(root, cur_word);
+            trieInsert(parent, c, true);
+
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
             word_len++;
             cur_word[word_len] = '\0';
-
-            // traverse the tree
-            Trie* parent = trieSearch(root, cur_word);
-            trieInsert((parent == NULL ? root: parent), c);
-
         }
     }
 
@@ -170,8 +162,8 @@ int main() {
     }
 
     disable_raw_mode();
-    trieDestroy(root);
     free(input);
+    ArenaFree(root);
     printf("\n");
 
     return 0;
