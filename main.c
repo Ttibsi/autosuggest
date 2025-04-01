@@ -87,8 +87,8 @@ int main() {
 
     char* cur_word = malloc(50 * sizeof(char));
     cur_word[0] = '\0';
-    unsigned int word_len = 0;
-    int c;
+    int word_len = 0;
+    int c; // This has to be an int for the sake of EOF comparison
     int word_count = 0;
 
     while ((c = fgetc(words)) != EOF) {
@@ -116,10 +116,6 @@ int main() {
         }
     }
 
-    if (!(feof(words))) { 
-        fprintf(stderr, "Error reading words file\n"); 
-    }
-    
     free(cur_word);
     fclose(words);
 

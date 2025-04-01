@@ -15,15 +15,16 @@ test.o: test.c
 
 test: test.o
 	$(CC) $^ -o $@ $(CFLAGS)
+
+.PHONY: t
+t: test
 	./test
 
 .PHONY: clean
 clean:
-	rm main.o
-	rm test.o
-	rm auto
-	rm test
+	rm *.o
 	rm *.d 
+	rm auto test
 
 -include main.d
 -include test.d

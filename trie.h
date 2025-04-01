@@ -80,7 +80,7 @@ Trie* trieSearch(Trie* t, char* word) {
         for (size_t j = 0; j < ALPHABET_LEN; j++) {
             if (t->children[j] == NULL) { break; }
 
-            if (strspn(word, t->children[j]->word) == strlen(word)) {
+            if (strspn(word, t->children[j]->word) == i + 1) {
                 t = t->children[j];
                 found = true;
                 break;
