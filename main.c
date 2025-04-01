@@ -8,9 +8,6 @@
 #define TRIE_IMPLEMENTATION
 #include "trie.h"
 
-#define ARENA_IMPLEMENTATION
-#include "arena.h"
-
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define VIABLE_WORD_BUF 1024
 
@@ -86,18 +83,12 @@ int main() {
         return -1;
     }
 
-    Arena arena = ArenaNew(1024 * 4);
-    Trie* root = ArenaAllocate(arena, sizeof(Trie));
-    *root = (Trie){
-        .children_len = 0,
-        .word = "\0",
-        .terminal = false,
-    };
+    Trie* root = trieConstruct();
 
     char* cur_word = malloc(50 * sizeof(char));
     cur_word[0] = '\0';
-    int word_len = 0;
-    char c;
+    unsigned int word_len = 0;
+    int c;
     int word_count = 0;
 
     while ((c = fgetc(words)) != EOF) {
@@ -163,7 +154,7 @@ int main() {
 
     disable_raw_mode();
     free(input);
-    ArenaFree(root);
+    trieDestruct();
     printf("\n");
 
     return 0;

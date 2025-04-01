@@ -1,5 +1,6 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g -fsanitize=address,undefined
+CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g 
+#-fsanitize=address,undefined
 
 all: auto
 
