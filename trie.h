@@ -73,7 +73,7 @@ void trieInsert(Trie* t, char c, bool terminal) {
 
 Trie* trieSearch(Trie* t, char* word) {
     if (t == NULL) { return NULL; }
-    if (strlen(word) == 0) { return NULL; }
+    if (strlen(word) == 0) { return t; }
 
     for (size_t i = 0; i < strlen(word); i++) {
         bool found = false;
