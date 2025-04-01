@@ -58,7 +58,7 @@ void trieInsert(Trie* t, char c, bool terminal) {
     }
 
     for (size_t i = 0; i < t->children_len; i++) {
-        if (strspn(t->children[i]->word, input_word) == 0) { return; }
+        if (strcmp(t->children[i]->word, input_word) == 0) { return; }
     }
 
     Trie* new_node = (Trie*)malloc(sizeof(Trie));
@@ -84,9 +84,8 @@ Trie* trieSearch(Trie* t, char* word) {
     for (size_t i = 0; i < strlen(word); i++) {
         bool found = false;
         for (size_t j = 0; j < ALPHABET_LEN; j++) {
-            if (t->children[j] == NULL) { break; }
+            // if (t->children[j] == NULL) { break; }
 
-            //if (strspn(word, t->children[j]->word) == i + 1) {
             if (prefix_len(word, t->children[j]->word) == i + 1) {
                 t = t->children[j];
                 found = true;
