@@ -1,4 +1,7 @@
-main.o
+*.o
+*.d
 auto
+test
 iris.log
 .gdb_history
+core
