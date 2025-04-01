@@ -96,7 +96,7 @@ int main() {
             continue;
         } else if (c == '\n') {
             Trie* parent = trieSearch(root, cur_word);
-            trieInsert((parent == NULL ? root : parent), c, true);
+            parent->terminal = true;
 
             word_count++;
             printf("Trained (%i): %s\n", word_count, cur_word);
@@ -107,7 +107,7 @@ int main() {
         } else {
             // traverse the tree
             Trie* parent = trieSearch(root, cur_word);
-            trieInsert((parent == NULL ? root : parent), c, true);
+            trieInsert((parent == NULL ? root : parent), c, false);
 
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
