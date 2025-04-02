@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -29,8 +30,14 @@ void disable_raw_mode(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
+int term_lines(void) {
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w);
+    return w.ws_row;
+}
+
 int find_terminal_words(Trie* start, char* words, int len) {
-    if (!(start->children_len)) {
+    if (!(start->children_len) && !(start->terminal)) {
         return len;
     }
 
@@ -65,14 +72,24 @@ char* collate_words(Trie* root, char* prefix) {
     return viable_words;
 }
 
+
 void print_words(char* words) {
+    printf("\x1b[90m");
+    int cur_lines = 0;
+    const int lines = term_lines();
+
     for (int i = 0; i < VIABLE_WORD_BUF; i++) {
         if (words[i] == '\0') { 
             printf("\r\n"); 
+            cur_lines++;
+
+            if (cur_lines > lines) { break; }
         } else {
             printf("%c", words[i]);
         }
     }
+
+    printf("\x1b[0m");
 }
 
 int main() {
@@ -131,7 +148,11 @@ int main() {
         printf("\x1b[H\r> %s", input);
         char c = getchar();
 
-        if (c == CTRL_KEY('c')) { break; }
+        if (c == CTRL_KEY('c')) {
+            printf("\x1b[2J\x1b[H");
+            break; 
+        }
+
         if (isalpha(c)) {
             input[input_len] = c;
             input_len++;
