@@ -151,28 +151,25 @@ int main() {
         if (c == CTRL_KEY('c')) {
             printf("\x1b[2J\x1b[H");
             break; 
-        }
-
-        if (isalpha(c)) {
+        } else if (c == CTRL_KEY('h')) {
+        } else if (c == CTRL_KEY('l')) {
+        } else if (isalpha(c)) {
+            printf("%c\n", c);
             input[input_len] = c;
             input_len++;
             input[input_len] = '\0';
 
             if (input_len >= 3) {
                 char* viable_words = collate_words(root, input);
-                // TODO: grey colour text
                 print_words(viable_words);
                 free(viable_words);
             }
-
-            continue;
         }
     }
 
     disable_raw_mode();
     free(input);
     trieDestruct();
-    printf("\n");
 
     return 0;
 }
