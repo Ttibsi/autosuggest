@@ -9,6 +9,9 @@
 #define TRIE_IMPLEMENTATION
 #include "trie.h"
 
+#define DLL_IMPLEMENTATION
+#include "dll.h"
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define VIABLE_WORD_BUF 1024
 
@@ -30,65 +33,53 @@ void disable_raw_mode(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-int term_lines(void) {
+size_t term_lines(void) {
     struct winsize w;
     ioctl(0, TIOCGWINSZ, &w);
     return w.ws_row;
 }
 
-int find_terminal_words(Trie* start, char* words, int len) {
+void clear_screen(void) {
+    printf("\x1b[2J\x1b[H");
+}
+
+void find_terminal_words(Trie* start, Node* words) {
+    if (start == NULL) { return; }
+    if (nodeLen(words) >= term_lines()) { return; }
+
     if (!(start->children_len) && !(start->terminal)) {
-        return len;
+        return;
     }
 
     if (start->terminal) {
-        if (len + strlen(start->word) > VIABLE_WORD_BUF) {
-            return len;
-        }
-
-        for (size_t i = 0; i < strlen(start->word); i++) {
-            words[len] = start->word[i];
-            len++;
-        }
-        words[len] = '\0';
-        len++;
+        Node n = nodeCreate(start->word);
+        Node* parent = words;
+        while (parent->next != NULL) { parent = parent->next; }
+        parent->next = &n;
+        n.prev = parent;
     }
 
     for (size_t i = 0; i < start->children_len; i++) {
-        len = find_terminal_words(start->children[i], words, len);
+        find_terminal_words(start->children[i], words);
     }
-
-    return len;
 }
 
-char* collate_words(Trie* root, char* prefix) {
-    char* viable_words = malloc(VIABLE_WORD_BUF * sizeof(char));
-    memset(viable_words, 0, VIABLE_WORD_BUF);
-
+void collate_words(Trie* root, char* prefix, Node* viable_words) {
     Trie* start_point = trieSearch(root, prefix);
-    if (start_point == NULL) { return viable_words; }
+    if (start_point == NULL) { return; }
 
-    (void)find_terminal_words(start_point, viable_words, 0);
-    return viable_words;
+    find_terminal_words(start_point, viable_words);
 }
 
+void print_words(Node* words) {
+    printf("\n\x1b[90m");
+    while (words->next != NULL) {
+        if (words->selected) { printf("\x1b[7m"); }
+        printf("%s\n", words->word);
+        if (words->selected) { printf("\x1b[27m"); }
 
-void print_words(char* words) {
-    printf("\x1b[90m");
-    int cur_lines = 0;
-    const int lines = term_lines();
-
-    for (int i = 0; i < VIABLE_WORD_BUF; i++) {
-        if (words[i] == '\0') { 
-            printf("\r\n"); 
-            cur_lines++;
-
-            if (cur_lines > lines) { break; }
-        } else {
-            printf("%c", words[i]);
-        }
+        words = words->next;
     }
-
     printf("\x1b[0m");
 }
 
@@ -142,27 +133,30 @@ int main() {
     int input_len = 0;
 
     enable_raw_mode();
-    printf("\x1b[2J\x1b[H");
+    clear_screen();
+
+    Node viable_words = nodeCreate("");
 
     while(true) {
         printf("\x1b[H\r> %s", input);
         char c = getchar();
 
         if (c == CTRL_KEY('c')) {
-            printf("\x1b[2J\x1b[H");
+            clear_screen();
             break; 
-        } else if (c == CTRL_KEY('h')) {
-        } else if (c == CTRL_KEY('l')) {
+
+        } else if (c == CTRL_KEY('n')) {
+        } else if (c == CTRL_KEY('p')) {
+        } else if (c == CTRL_KEY('y')) {
         } else if (isalpha(c)) {
-            printf("%c\n", c);
+            printf("%c", c);
             input[input_len] = c;
             input_len++;
             input[input_len] = '\0';
 
             if (input_len >= 3) {
-                char* viable_words = collate_words(root, input);
-                print_words(viable_words);
-                free(viable_words);
+                collate_words(root, input, &viable_words);
+                print_words(&viable_words);
             }
         }
     }
@@ -170,6 +164,7 @@ int main() {
     disable_raw_mode();
     free(input);
     trieDestruct();
+    nodesFree(viable_words);
 
     return 0;
 }
