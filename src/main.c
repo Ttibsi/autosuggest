@@ -43,6 +43,10 @@ void clear_screen(void) {
     printf("\x1b[2J\x1b[H");
 }
 
+void clear_line(void) {
+    printf("\x1b[2K");
+}
+
 void find_terminal_words(Trie* start, Node* words, Arena* dll_arena) {
     if (start == NULL) { return; }
     if (nodeLen(words) >= term_lines()) { return; }
@@ -55,9 +59,10 @@ void find_terminal_words(Trie* start, Node* words, Arena* dll_arena) {
         Node n = nodeCreate(start->word, dll_arena);
         Node* parent = words;
         while (parent->next != NULL) { parent = parent->next; }
+        n.prev = parent;
+
         parent->next = malloc(sizeof(Node));
         memcpy(parent->next, &n, sizeof(Node));
-        n.prev = parent;
     }
 
     for (size_t i = 0; i < start->children_len; i++) {
@@ -85,28 +90,35 @@ void print_words(Node* words) {
     printf("\x1b[0m");
 }
 
-void select_next(Node* words) {
+Node* select_next(Node* words) {
+    Node* start = words;
     while (words->next != NULL) {
         if (words->selected) {
             words->next->selected = true;
             words->selected = false;
-            return;
+            return start;
         }
 
         words = words->next;
     }
+
+    return start;
 }
 
-void select_prev(Node* words) {
+Node* select_prev(Node* words) {
+    Node* start = words;
     while (words->next != NULL) {
-        if (words->selected) {
+        // if (words->selected && words->prev != NULL) {
+        if (words->selected) { 
             words->prev->selected = true;
             words->selected = false;
-            return;
+            return start;
         }
 
         words = words->next;
     }
+
+    return start;
 }
 
 void select_current_word(Node* viable, Node* selected) {
@@ -151,8 +163,7 @@ int main() {
 
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
-            word_len++;
-            cur_word[word_len] = '\0';
+            cur_word[++word_len] = '\0';
         }
     }
 
@@ -180,13 +191,21 @@ int main() {
             break; 
 
         } else if (c == CTRL_KEY('n')) {
-            select_next(&viable_words);
+            viable_words = *select_next(&viable_words);
+            clear_screen();
             print_words(&viable_words);
         } else if (c == CTRL_KEY('p')) {
-            select_prev(&viable_words);
+            viable_words = *select_prev(&viable_words);
+            clear_screen();
             print_words(&viable_words);
         } else if (c == CTRL_KEY('y')) {
             select_current_word(&viable_words, &selected_words);
+        } else if (c == 0x7F) { // Backspace
+            if (input_len > 0) {
+                input[--input_len] = '\0';
+                clear_line();
+            }
+
         } else if (isalpha(c)) {
             printf("%c", c);
             input[input_len] = c;
@@ -194,9 +213,14 @@ int main() {
             input[input_len] = '\0';
 
             if (input_len >= 3) {
+                viable_words = nodeCreate("", &dll_arena);
+                clear_screen();
+
                 collate_words(root, input, &viable_words, &dll_arena);
-                viable_words.selected = true;
-                print_words(&viable_words);
+                if (viable_words.next != NULL) {
+                    viable_words.next->selected = true;
+                    print_words(&viable_words);
+                }
             }
         }
     }
