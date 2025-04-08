@@ -13,7 +13,7 @@ build:
 	mkdir build
 
 build/%.o: src/%.c | build
-	$(CC) $< -c -MMD -MP -o $@
+	$(CC) $< -c -MMD -MP -o $@ $(CFLAGS)
 
 auto: $(objects)
 	$(CC) $^ -o $@
