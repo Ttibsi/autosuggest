@@ -1,28 +1,32 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g 
-#-fsanitize=address,undefined
 
-OBJ: main.o trie.o
+sources := $(filter-out src/test.c,$(wildcard src/*.c))
+objects := $(patsubst src/%.c,build/%.o,$(sources))
+
+test_sources := $(filter-out src/main.c,$(wildcard src/*.c))
+test_objects := $(patsubst src/%.c,build/%.o,$(test_sources))
 
 all: auto
 
-%.o: %.c
-	$(CC) $< -c -o $@ -MMD -MP $(CFLAGS)
+build:
+	mkdir build
 
-auto: $(OBJ)
-	$(CC) $^ -o $@ $(CFLAGS)
+build/%.o: src/%.c | build
+	$(CC) $< -c -MMD -MP -o $@
 
-test: test.o $(OBJ)
-	$(CC) $^ -o $@ $(CFLAGS)
+auto: $(objects)
+	$(CC) $^ -o $@
 
-.PHONY: t
-t: test
-	./test
+test: $(test_objects)
+	$(CC) $^ -o $@
+
 
 .PHONY: clean
 clean:
-	rm *.o
-	rm *.d 
-	rm auto test
+	rm -rf build 
+	if [ -f auto ]; then rm auto; fi
+	if [ -f test ]; then rm test; fi
+	if [ -f core ]; then rm core; fi
 
--include $(OBJ:.o=.d)
+-include $(objects:.o=.d)
