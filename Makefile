@@ -1,6 +1,10 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g 
 
+ifeq (1, 0)
+	san := -fsanitize=address,undefined
+endif
+
 sources := $(filter-out src/test.c,$(wildcard src/*.c))
 objects := $(patsubst src/%.c,build/%.o,$(sources))
 
@@ -13,10 +17,10 @@ build:
 	mkdir build
 
 build/%.o: src/%.c | build
-	$(CC) $< -c -MMD -MP -o $@ $(CFLAGS)
+	$(CC) $< -c -MMD -MP -o $@ $(CFLAGS) $(san)
 
 auto: $(objects)
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(san)
 
 test: $(test_objects)
 	$(CC) $^ -o $@
