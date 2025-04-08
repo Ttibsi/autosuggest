@@ -1,6 +1,8 @@
 #ifndef TRIE_H
 #define TRIE_H
 
+#include <stdbool.h>
+
 #include "arena.h"
 
 // https://en.wikipedia.org/wiki/Trie

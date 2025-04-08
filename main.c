@@ -6,11 +6,11 @@
 #include <termios.h>
 #include <unistd.h>
 
-#define ARENA_IMPLEMENTATION
-#include "arena.h"
-
 #include "dll.h"
 #include "trie.h"
+
+#define ARENA_IMPLEMENTATION
+#include "arena.h"
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 #define VIABLE_WORD_BUF 1024
