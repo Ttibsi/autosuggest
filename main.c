@@ -55,7 +55,8 @@ void find_terminal_words(Trie* start, Node* words) {
         Node n = nodeCreate(start->word);
         Node* parent = words;
         while (parent->next != NULL) { parent = parent->next; }
-        parent->next = &n;
+        parent->next = (Node*)malloc(sizeof(Node));
+        memcpy(parent->next, &n, sizeof(Node));
         n.prev = parent;
     }
 
@@ -72,15 +73,44 @@ void collate_words(Trie* root, char* prefix, Node* viable_words) {
 }
 
 void print_words(Node* words) {
-    printf("\n\x1b[90m");
+    printf("\r\n\x1b[90m");
     while (words->next != NULL) {
         if (words->selected) { printf("\x1b[7m"); }
-        printf("%s\n", words->word);
+        printf("%s\r\n", words->word);
         if (words->selected) { printf("\x1b[27m"); }
 
         words = words->next;
     }
     printf("\x1b[0m");
+}
+
+void select_next(Node* words) {
+    while (words->next != NULL) {
+        if (words->selected) {
+            words->next->selected = true;
+            words->selected = false;
+            return;
+        }
+
+        words = words->next;
+    }
+}
+
+void select_prev(Node* words) {
+    while (words->next != NULL) {
+        if (words->selected) {
+            words->prev->selected = true;
+            words->selected = false;
+            return;
+        }
+
+        words = words->next;
+    }
+}
+
+void select_current_word(Node* viable, Node* selected) {
+    (void)viable;
+    (void)selected;
 }
 
 int main() {
@@ -135,7 +165,8 @@ int main() {
     enable_raw_mode();
     clear_screen();
 
-    Node viable_words = nodeCreate("");
+    Node viable_words = nodeCreate("\0");
+    Node selected_words = nodeCreate("\0");
 
     while(true) {
         printf("\x1b[H\r> %s", input);
@@ -146,8 +177,11 @@ int main() {
             break; 
 
         } else if (c == CTRL_KEY('n')) {
+            select_next(&viable_words);
         } else if (c == CTRL_KEY('p')) {
+            select_prev(&viable_words);
         } else if (c == CTRL_KEY('y')) {
+            select_current_word(&viable_words, &selected_words);
         } else if (isalpha(c)) {
             printf("%c", c);
             input[input_len] = c;

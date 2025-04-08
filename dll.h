@@ -27,7 +27,7 @@ Node nodeCreate(const char* word) {
 
     if (word != NULL) {
         n.word_len = strlen(word);
-        n.word = (char*)arena_alloc(&dll_arena, sizeof(char) * strlen(word));
+        n.word = (char*)arena_alloc(&dll_arena, sizeof(char) * (strlen(word) + 1));
         n.word = strcpy(n.word, word);
     } else {
         n.word_len = 0;
@@ -50,6 +50,7 @@ void nodesFree(Node n) {
     while (n.next != NULL) {
         free(n.word);
         n = *n.next;
+        // free(n.prev);
     }
 }
 
