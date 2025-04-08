@@ -1,59 +1,22 @@
 #ifndef DLL_H
 #define DLL_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
+#include "arena.h"
 
-typedef struct _Node {
-    struct _Node* next;
-    struct _Node* prev;
+typedef struct _node {
+    struct _node* next;
+    struct _node* prev;
     char* word;
     int word_len;
     bool selected;
 } Node;
 
-Node nodeCreate(const char*);
+Node nodeCreate(const char*, Arena*);
+size_t nodeLen(Node*);
+void nodesFree(Node, Arena*);
 
-# ifdef DLL_IMPLEMENTATION
-
-static Arena dll_arena = {0};
-
-Node nodeCreate(const char* word) {
-    Node n;
-    n.next = NULL;
-    n.prev = NULL;
-    n.selected = false;
-
-    if (word != NULL) {
-        n.word_len = strlen(word);
-        n.word = (char*)arena_alloc(&dll_arena, sizeof(char) * (strlen(word) + 1));
-        n.word = strcpy(n.word, word);
-    } else {
-        n.word_len = 0;
-        n.word = "";
-    }
-    return n;
-}
-
-size_t nodeLen(Node* n) {
-    size_t i = 1;
-    while (n->next != NULL) {
-        i++;
-        n = n->next;
-    }
-
-    return i;
-}
-
-void nodesFree(Node n) {
-    while (n.next != NULL) {
-        n = *n.next;
-        // free(n.prev);
-    }
-    
-    arena_free(&dll_arena);
-}
-
-#endif // DLL_IMPLEMENTATION
 #endif // DLL_H
