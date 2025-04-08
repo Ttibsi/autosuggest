@@ -48,10 +48,11 @@ size_t nodeLen(Node* n) {
 
 void nodesFree(Node n) {
     while (n.next != NULL) {
-        free(n.word);
         n = *n.next;
         // free(n.prev);
     }
+    
+    arena_free(&dll_arena);
 }
 
 #endif // DLL_IMPLEMENTATION
