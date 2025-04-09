@@ -108,7 +108,6 @@ Node* select_next(Node* words) {
 Node* select_prev(Node* words) {
     Node* start = words;
     while (words->next != NULL) {
-        // if (words->selected && words->prev != NULL) {
         if (words->selected) { 
             words->prev->selected = true;
             words->selected = false;
@@ -122,22 +121,23 @@ Node* select_prev(Node* words) {
 }
 
 void select_current_word(Node* viable, Node* selected, Arena* dll_arena) {
-    while (!viable->selected) {
-        viable = viable->next;
-    }
-
+    while (!viable->selected) { viable = viable->next; }
     while (selected->next != NULL) { selected = selected->next; }
+
     Node n = nodeCreate("", dll_arena);
-    n.word = malloc(sizeof(viable->word));
-    memcpy(n.word, viable->word, sizeof(char) * strlen(viable->word));
+    n.word = arena_alloc(dll_arena, sizeof(char) * (strlen(viable->word) + 1));
+    n.word = strcpy(n.word, viable->word);
+
+    selected->next = malloc(sizeof(Node));
+    memcpy(selected->next, &n, sizeof(Node));
 }
 
 void print_selected_words(Node* selected) {
     (void)selected;
-    // while (selected->next != NULL) {
-    //     printf("$ %s\r\n", selected->word);
-    //     selected = selected->next;
-    // }
+    while (selected->next != NULL) {
+        printf("$ %s\r\n", selected->word);
+        selected = selected->next;
+    }
 }
 
 int main() {
@@ -197,12 +197,11 @@ int main() {
     Node selected_words = nodeCreate("", &dll_arena);
 
     while(true) {
-        // if (input_len >= 3) {
-        //     clear_screen();
-        //     if (selected_words.next != NULL) {
-        //         print_selected_words(&selected_words);
-        //     }
-        // }
+        if (input_len >= 3) {
+            if (selected_words.next != NULL) {
+                print_selected_words(&selected_words);
+            }
+        }
 
         printf("\x1b[%zu;1H\r> %s", nodeLen(&selected_words), input);
         char c = getchar();
