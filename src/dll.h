@@ -17,6 +17,5 @@ typedef struct _node {
 
 Node nodeCreate(const char*, Arena*);
 size_t nodeLen(Node*);
-void nodesFree(Node, Arena*);
 
 #endif // DLL_H

@@ -44,12 +44,12 @@ void clear_screen(void) {
 }
 
 void clear_line(void) {
-    printf("\x1b[2K");
+    printf("\x1b[2K\r");
 }
 
-void find_terminal_words(Trie* start, Node* words, Arena* dll_arena) {
+void find_terminal_words(Trie* start, Node* words, Arena* dll_arena, int extant_lines) {
     if (start == NULL) { return; }
-    if (nodeLen(words) >= term_lines()) { return; }
+    if (nodeLen(words) >= term_lines() - extant_lines) { return; }
 
     if (!(start->children_len) && !(start->terminal)) {
         return;
@@ -61,24 +61,24 @@ void find_terminal_words(Trie* start, Node* words, Arena* dll_arena) {
         while (parent->next != NULL) { parent = parent->next; }
         n.prev = parent;
 
-        parent->next = malloc(sizeof(Node));
+        parent->next = arena_alloc(dll_arena, sizeof(Node));
         memcpy(parent->next, &n, sizeof(Node));
     }
 
     for (size_t i = 0; i < start->children_len; i++) {
-        find_terminal_words(start->children[i], words, dll_arena);
+        find_terminal_words(start->children[i], words, dll_arena, extant_lines);
     }
 }
 
-void collate_words(Trie* root, char* prefix, Node* viable_words, Arena* dll_arena) {
+void collate_words(Trie* root, char* prefix, Node* viable_words, Arena* dll_arena, int extant_lines) {
     Trie* start_point = trieSearch(root, prefix);
     if (start_point == NULL) { return; }
 
-    find_terminal_words(start_point, viable_words, dll_arena);
+    find_terminal_words(start_point, viable_words, dll_arena, extant_lines);
 }
 
 void print_words(Node* words) {
-    printf("\r\n\x1b[90m");
+    printf("\r\x1b[90m");
     while (words->next != NULL) {
 
         if (words->selected) { printf("\x1b[7m"); }
@@ -127,16 +127,28 @@ void select_current_word(Node* viable, Node* selected, Arena* dll_arena) {
     Node n = nodeCreate("", dll_arena);
     n.word = arena_alloc(dll_arena, sizeof(char) * (strlen(viable->word) + 1));
     n.word = strcpy(n.word, viable->word);
+    n.prev = selected;
 
-    selected->next = malloc(sizeof(Node));
+    selected->next = arena_alloc(dll_arena, sizeof(Node));
     memcpy(selected->next, &n, sizeof(Node));
 }
 
 void print_selected_words(Node* selected) {
-    (void)selected;
     while (selected->next != NULL) {
-        printf("$ %s\r\n", selected->word);
         selected = selected->next;
+        printf("$ %s\r\n", selected->word);
+    }
+}
+
+void generate_viable_words(Node* viable_words, Trie* root, char* input, Arena* dll_arena, int selected_len, Node* selected_words) {
+    clear_screen();
+    print_selected_words(selected_words);
+    printf("\x1b[%d;1H\r> %s", selected_len, input);
+
+    collate_words(root, input, viable_words, dll_arena, selected_len);
+    if (viable_words->next != NULL) {
+        viable_words->next->selected = true;
+        print_words(viable_words);
     }
 }
 
@@ -173,7 +185,7 @@ int main() {
         } else {
             // traverse the tree
             Trie* parent = trieSearch(root, cur_word);
-            trieInsert((parent == NULL ? root : parent), c, false);
+            trieInsert((parent == NULL ? root : parent), c, false, &trie_arena);
 
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
@@ -197,15 +209,15 @@ int main() {
     Node selected_words = nodeCreate("", &dll_arena);
 
     while(true) {
-        if (input_len >= 3) {
-            if (selected_words.next != NULL) {
-                print_selected_words(&selected_words);
-            }
-        }
+        clear_screen();
 
-        printf("\x1b[%zu;1H\r> %s", nodeLen(&selected_words), input);
+        if (selected_words.next != NULL) { print_selected_words(&selected_words); }
+
+        printf("> %s", input);
+
+        if (viable_words.next != NULL) { print_words(&viable_words); }
+
         char c = getchar();
-
         if (c == CTRL_KEY('c')) {
             clear_screen();
             break; 
@@ -220,10 +232,19 @@ int main() {
             print_words(&viable_words);
         } else if (c == CTRL_KEY('y')) {
             select_current_word(&viable_words, &selected_words, &dll_arena);
+            input_len = 0;
+            input[0] = '\0';
+
+            viable_words = nodeCreate("", &dll_arena);
         } else if (c == 0x7F) { // Backspace
             if (input_len > 0) {
                 input[--input_len] = '\0';
-                clear_line();
+
+                if (input_len >= 3) {
+                    generate_viable_words(&viable_words, root, input, &dll_arena, nodeLen(&selected_words), &selected_words);
+                } else {
+                    clear_line();
+                }
             }
 
         } else if (isalpha(c)) {
@@ -234,13 +255,9 @@ int main() {
 
             if (input_len >= 3) {
                 viable_words = nodeCreate("", &dll_arena);
-                clear_screen();
+                
+                generate_viable_words(&viable_words, root, input, &dll_arena, nodeLen(&selected_words), &selected_words);
 
-                collate_words(root, input, &viable_words, &dll_arena);
-                if (viable_words.next != NULL) {
-                    viable_words.next->selected = true;
-                    print_words(&viable_words);
-                }
             }
         }
     }
@@ -248,7 +265,8 @@ int main() {
     disable_raw_mode();
     free(input);
     trieDestruct(&trie_arena);
-    nodesFree(viable_words, &dll_arena);
+
+    arena_free(&dll_arena);
 
     return 0;
 }

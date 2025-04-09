@@ -21,7 +21,7 @@ typedef struct trie {
 
 Trie* trieConstruct(Arena*);
 void trieDestruct(Arena*);
-void trieInsert(Trie*, char, bool);
+void trieInsert(Trie*, char, bool, Arena*);
 Trie* trieSearch(Trie*, char*);
 
 #endif // TRIE_H

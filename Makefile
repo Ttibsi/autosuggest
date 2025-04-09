@@ -1,7 +1,7 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g 
 
-ifeq (1, 0)
+ifeq (0, 1)
 	san := -fsanitize=address,undefined
 endif
 

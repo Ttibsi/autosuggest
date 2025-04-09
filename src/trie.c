@@ -21,11 +21,11 @@ void trieDestruct(Arena* arena) {
     arena_free(arena);
 }
 
-void trieInsert(Trie* t, char c, bool terminal) {
+void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
     if (t == NULL) { return; }
     if (isspace(c)) { return; }
 
-    char* input_word = malloc(55 * sizeof(char));
+    char* input_word = arena_alloc(arena, 55 * sizeof(char));
     sprintf(input_word, "%s%c", t->word, c);
 
     if (t->children_len == ALPHABET_LEN) {
@@ -59,7 +59,8 @@ Trie* trieSearch(Trie* t, char* word) {
     for (size_t i = 0; i < strlen(word); i++) {
         bool found = false;
         for (size_t j = 0; j < ALPHABET_LEN; j++) {
-            // if (t->children[j] == NULL) { break; }
+            if (t->children[j] == NULL) { break; }
+            if (j >= t->children_len) { break; }
 
             if (prefix_len(word, t->children[j]->word) == i + 1) {
                 t = t->children[j];
