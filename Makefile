@@ -23,7 +23,7 @@ auto: $(objects)
 	$(CC) $^ -o $@ $(san)
 
 test: $(test_objects)
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(san)
 
 
 .PHONY: clean
