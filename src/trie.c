@@ -28,10 +28,6 @@ void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
     char* input_word = arena_alloc(arena, 55 * sizeof(char));
     sprintf(input_word, "%s%c", t->word, c);
 
-    if (t->children_len == ALPHABET_LEN) {
-        fprintf(stderr, "Word is too long: %c(%i) not included\n", c, c);
-    }
-
     for (size_t i = 0; i < t->children_len; i++) {
         if (strcmp(t->children[i]->word, input_word) == 0) { return; }
     }
@@ -48,7 +44,10 @@ void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
 
 size_t prefix_len(char* lhs, char* rhs) {
     size_t counter = 0;
-    while(lhs[counter] == rhs[counter] && lhs[counter] != '\0') { counter++; }
+    while(lhs[counter] == rhs[counter]) { 
+        if (lhs[counter] == '\0') { break; }
+        counter++;
+    }
     return counter;
 }
 
@@ -58,9 +57,9 @@ Trie* trieSearch(Trie* t, char* word) {
 
     for (size_t i = 0; i < strlen(word); i++) {
         bool found = false;
-        for (size_t j = 0; j < ALPHABET_LEN; j++) {
+
+        for (size_t j = 0; j < t->children_len; j++) {
             if (t->children[j] == NULL) { break; }
-            if (j >= t->children_len) { break; }
 
             if (prefix_len(word, t->children[j]->word) == i + 1) {
                 t = t->children[j];

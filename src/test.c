@@ -61,8 +61,13 @@ void test_nodeLen() {
     arena_free(&test_arena);
 }
 
+void test_prefix_len() {
+    assert(false && "TODO");
+}
+
 int main() {
     call(test_trie_insert);
     call(test_trie_search);
     call(test_nodeLen);
+    call(test_prefix_len);
 }

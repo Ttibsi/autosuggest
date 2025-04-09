@@ -23,5 +23,6 @@ Trie* trieConstruct(Arena*);
 void trieDestruct(Arena*);
 void trieInsert(Trie*, char, bool, Arena*);
 Trie* trieSearch(Trie*, char*);
+size_t prefix_len(char*, char*);
 
 #endif // TRIE_H
