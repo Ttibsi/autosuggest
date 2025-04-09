@@ -36,7 +36,7 @@ void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
         if (strcmp(t->children[i]->word, input_word) == 0) { return; }
     }
 
-    Trie* new_node = malloc(sizeof(Trie));
+    Trie* new_node = arena_alloc(arena, sizeof(Trie));
     *new_node = (Trie){
         .children_len = 0,
         .word = input_word,
