@@ -196,10 +196,6 @@ int main() {
     free(cur_word);
     fclose(words);
 
-    // real 3.348s
-    // Framework laptop, no stream, yes sanitizers
-    return 0;
-
     // Step 2: Get user input and display suggestions
     char* input = malloc(50 * sizeof(char));
     input[0] = '\0';
