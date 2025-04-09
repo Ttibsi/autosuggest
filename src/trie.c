@@ -21,15 +21,17 @@ void trieDestruct(Arena* arena) {
     arena_free(arena);
 }
 
-void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
-    if (t == NULL) { return; }
-    if (isspace(c)) { return; }
+Trie* trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
+    if (t == NULL) { return NULL; }
+    if (isspace(c)) { return t; }
 
     char* input_word = arena_alloc(arena, 55 * sizeof(char));
     sprintf(input_word, "%s%c", t->word, c);
 
     for (size_t i = 0; i < t->children_len; i++) {
-        if (strcmp(t->children[i]->word, input_word) == 0) { return; }
+        if (strcmp(t->children[i]->word, input_word) == 0) { 
+            return t->children[i]; 
+        }
     }
 
     Trie* new_node = arena_alloc(arena, sizeof(Trie));
@@ -40,6 +42,7 @@ void trieInsert(Trie* t, char c, bool terminal, Arena* arena) {
     };
 
     t->children[t->children_len++] = new_node;
+    return new_node;
 }
 
 size_t prefix_len(char* lhs, char* rhs) {

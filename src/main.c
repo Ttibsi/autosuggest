@@ -162,6 +162,7 @@ int main() {
 
     Arena trie_arena = {0};
     Trie* root = trieConstruct(&trie_arena);
+    Trie* current_node = root;
 
     char* cur_word = malloc(50 * sizeof(char));
     cur_word[0] = '\0';
@@ -173,19 +174,18 @@ int main() {
         if (c == '\r') {
             continue;
         } else if (c == '\n') {
-            Trie* parent = trieSearch(root, cur_word);
-            parent->terminal = true;
+            current_node->terminal = true;
 
             word_count++;
             printf("Trained (%i): %s\n", word_count, cur_word);
 
             cur_word[0] = '\0';
             word_len = 0;
+            current_node = root;
 
         } else {
             // traverse the tree
-            Trie* parent = trieSearch(root, cur_word);
-            trieInsert((parent == NULL ? root : parent), c, false, &trie_arena);
+            current_node = trieInsert(current_node, c, false, &trie_arena);
 
             // Add to cur_word for printing purposes
             cur_word[word_len] = c;
@@ -195,6 +195,10 @@ int main() {
 
     free(cur_word);
     fclose(words);
+
+    // real 3.348s
+    // Framework laptop, no stream, yes sanitizers
+    return 0;
 
     // Step 2: Get user input and display suggestions
     char* input = malloc(50 * sizeof(char));
