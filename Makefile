@@ -1,7 +1,7 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g 
+CFLAGS := -Wall -Wextra -std=c11 -Wimplicit-fallthrough -g
 
-ifeq (1, 1)
+ifeq (0, 1)
 	san := -fsanitize=address,undefined
 endif
 
@@ -11,6 +11,7 @@ objects := $(patsubst src/%.c,build/%.o,$(sources))
 test_sources := $(filter-out src/main.c,$(wildcard src/*.c))
 test_objects := $(patsubst src/%.c,build/%.o,$(test_sources))
 
+.PHONY: all
 all: auto
 
 build:
@@ -22,15 +23,19 @@ build/%.o: src/%.c | build
 auto: $(objects)
 	$(CC) $^ -o $@ $(san)
 
-test: $(test_objects)
+test_exe: $(test_objects)
 	$(CC) $^ -o $@ $(san)
+
+.PHONY: test
+test: test_exe
+	./test_exe
 
 
 .PHONY: clean
 clean:
-	rm -rf build 
+	rm -rf build
 	if [ -f auto ]; then rm auto; fi
-	if [ -f test ]; then rm test; fi
+	if [ -f test_exe ]; then rm test; fi
 	if [ -f core ]; then rm core; fi
 
 -include $(objects:.o=.d)

@@ -13,16 +13,16 @@
 // word stored as a child of `ten`
 
 typedef struct trie {
-    struct trie* children[ALPHABET_LEN];
-    size_t children_len;
-    char* word;
-    bool terminal;
+  struct trie *children[ALPHABET_LEN];
+  size_t children_len;
+  char *word;
+  bool terminal;
 } Trie;
 
-Trie* trieConstruct(Arena*);
-void trieDestruct(Arena*);
-Trie* trieInsert(Trie*, char, bool, Arena*);
-Trie* trieSearch(Trie*, char*);
-size_t prefix_len(char*, char*);
+Trie *trieConstruct(Arena *);
+void trieDestruct(Arena *);
+Trie *trieInsert(Trie *, char, bool, Arena *);
+Trie *trieSearch(Trie *, char *);
+size_t prefix_len(char *, char *);
 
 #endif // TRIE_H

@@ -1,7 +1,7 @@
 *.o
 *.d
 auto
-test
+test_exe
 iris.log
 .gdb_history
 core
