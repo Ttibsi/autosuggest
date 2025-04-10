@@ -65,7 +65,10 @@ void test_nodeLen() {
   arena_free(&test_arena);
 }
 
-void test_prefix_len() { assert(false && "TODO"); }
+void test_prefix_len() {
+  assert(prefix_len("hell", "help") == 3);
+  assert(prefix_len("no", "yes") == 0);
+}
 
 int main() {
   call(test_trie_insert);
