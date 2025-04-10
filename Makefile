@@ -35,7 +35,7 @@ test: test_exe
 clean:
 	rm -rf build
 	if [ -f auto ]; then rm auto; fi
-	if [ -f test_exe ]; then rm test; fi
+	if [ -f test_exe ]; then rm test_exe; fi
 	if [ -f core ]; then rm core; fi
 
 -include $(objects:.o=.d)
